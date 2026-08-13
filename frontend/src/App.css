@@ -48,3 +48,12 @@ body { margin: 0; background: #0f1117; color: #e6e6e6; font-family: -apple-syste
 .risk-card { background: #14161d; border-left: 4px solid; border-radius: 8px; padding: 12px 14px; }
 .risk-path { font-family: monospace; font-size: 13px; margin-bottom: 6px; word-break: break-all; }
 .risk-meta { color: #9aa0ac; font-size: 12px; }
+.btn-reject { background: #e74c3c; }
+.btn-approve { background: #2ecc71; }
+.btn-fix { background: #f39c12; }
+.panel button {
+  padding: 8px 16px; border-radius: 8px; border: none; color: white;
+  font-weight: 600; cursor: pointer;
+}
+.panel button:disabled { opacity: 0.6; cursor: not-allowed; }
+.issue-source { color: #6f7480; font-size: 11px; margin-left: auto; text-transform: uppercase; }
