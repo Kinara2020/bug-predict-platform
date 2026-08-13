@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+langgraph
+langchain
+pygithub
+radon
+bandit
+google-generativeai
+scikit-learn
+pandas
+joblib
+python-dotenv
