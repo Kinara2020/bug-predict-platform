@@ -15,7 +15,8 @@ def run_bandit_on_file(file_path, content):
                 line=r["line_number"],
                 severity=r["issue_severity"],
                 issue=r["issue_text"],
-                recommendation=f"{r.get('test_id')} — confidence {r.get('issue_confidence')}"
+                recommendation=f"{r.get('test_id')} — confidence {r.get('issue_confidence')}",
+                source="bandit"
             ))
     finally:
         os.unlink(tmp_path)

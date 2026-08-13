@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 class FileMetrics(BaseModel):
     file_path: str
@@ -15,6 +15,7 @@ class SecurityIssue(BaseModel):
     severity: str
     issue: str
     recommendation: str
+    source: str = "bandit"  # "bandit" or "semgrep"
 
 class ScanState(BaseModel):
     owner: str
@@ -25,3 +26,5 @@ class ScanState(BaseModel):
     security_issues: List[SecurityIssue] = []
     llm_review_notes: List[str] = []
     overall_quality_score: float = 0.0
+    decision: str = "pending"          # pending | approved | rejected | fix_suggested
+    fix_branch: Optional[str] = None
