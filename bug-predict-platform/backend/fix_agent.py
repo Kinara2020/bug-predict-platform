@@ -2,7 +2,9 @@ import os
 from github import Github, Auth
 import google.generativeai as genai
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+api_key = os.getenv("GOOGLE_API_KEY")
+if api_key:
+    genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.0-flash")
 
 FIX_PROMPT = """You are a code repair agent. Fix the described issue in this file.
@@ -15,20 +17,39 @@ Current code:
 """
 
 def generate_fix(file_path, content, issue_description):
-    prompt = FIX_PROMPT.format(issue=issue_description, file_path=file_path, code=content[:6000])
-    resp = model.generate_content(prompt)
-    fixed = resp.text.strip()
+    if not content:
+        return ""
+    prompt = FIX_PROMPT.format(
+        issue=issue_description or "",
+        file_path=file_path or "",
+        code=content[:6000]
+    )
+    try:
+        resp = model.generate_content(prompt)
+        if not resp or not resp.text:
+            return content
+        fixed = resp.text.strip()
+    except Exception:
+        return content
+
     if fixed.startswith("```"):
-        parts = fixed.split("```")
-        fixed = parts[1]
-        first_line, _, rest = fixed.partition("\n")
-        if first_line.strip().lower() in ("python", "javascript", "js", "java"):
-            fixed = rest
+        lines = fixed.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        fixed = "\n".join(lines)
     return fixed.strip()
 
 def create_fix_branch_and_commit(owner, repo_name, base_branch, files_to_fix):
     """files_to_fix: list of {file_path, content, issue}. Returns new branch name."""
+    if not files_to_fix:
+        return None
+
     token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        raise ValueError("GITHUB_TOKEN environment variable is not set")
+
     gh = Github(auth=Auth.Token(token))
     repo = gh.get_repo(f"{owner}/{repo_name}")
 
@@ -39,13 +60,36 @@ def create_fix_branch_and_commit(owner, repo_name, base_branch, files_to_fix):
     repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=base_sha)
 
     for f in files_to_fix:
-        fixed_code = generate_fix(f["file_path"], f["content"], f["issue"])
-        existing = repo.get_contents(f["file_path"], ref=branch_name)
-        repo.update_file(
-            path=f["file_path"],
-            message=f"fix: resolve issue in {f['file_path']}",
-            content=fixed_code,
-            sha=existing.sha,
-            branch=branch_name,
-        )
+        file_path = f.get("file_path")
+        content = f.get("content", "")
+        issue = f.get("issue", "")
+        if not file_path:
+            continue
+
+        fixed_code = generate_fix(file_path, content, issue)
+        try:
+            existing = repo.get_contents(file_path, ref=branch_name)
+            sha = existing.sha if hasattr(existing, "sha") else (existing[0].sha if isinstance(existing, list) else None)
+            if sha:
+                repo.update_file(
+                    path=file_path,
+                    message=f"fix: resolve issue in {file_path}",
+                    content=fixed_code,
+                    sha=sha,
+                    branch=branch_name,
+                )
+            else:
+                repo.create_file(
+                    path=file_path,
+                    message=f"fix: resolve issue in {file_path}",
+                    content=fixed_code,
+                    branch=branch_name,
+                )
+        except Exception:
+            repo.create_file(
+                path=file_path,
+                message=f"fix: resolve issue in {file_path}",
+                content=fixed_code,
+                branch=branch_name,
+            )
     return branch_name
