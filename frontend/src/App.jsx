@@ -24,6 +24,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [deciding, setDeciding] = useState(false);
   const [error, setError] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState({});
+
+  const toggleFile = (path) => {
+    setSelectedFiles((prev) => ({ ...prev, [path]: !prev[path] }));
+  };
 
   const runScan = async () => {
     if (!owner || !repo) {
@@ -33,6 +38,7 @@ export default function App() {
     setError("");
     setLoading(true);
     setResult(null);
+    setSelectedFiles({});
     try {
       const res = await fetch(`${API_URL}/scan`, {
         method: "POST",
@@ -55,31 +61,41 @@ export default function App() {
       const res = await fetch(`${API_URL}/latest?owner=${owner}&repo=${repo}`);
       if (res.ok) setResult(await res.json());
     } catch (e) {
-      // silent — used for polling after webhook triggers
+      // silent
     }
   };
 
   const sendDecision = async (decision) => {
     setDeciding(true);
+    setError("");
     const filesToFix =
       decision === "suggest_fix"
         ? result.file_metrics
-            .filter((f) => f.bug_risk_label === "high")
+            .filter((f) => f.bug_risk_label !== "low" && selectedFiles[f.file_path])
             .map((f) => ({
               file_path: f.file_path,
               issue: "High predicted bug risk — refactor and add safety checks",
             }))
         : [];
+    if (decision === "suggest_fix" && filesToFix.length === 0) {
+      setError("Select at least one file to fix before approving.");
+      setDeciding(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ owner, repo, branch, decision, files_to_fix: filesToFix }),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Decision failed");
+      }
       const data = await res.json();
       setResult(data);
     } catch (e) {
-      setError("Decision failed — check backend logs");
+      setError(e.message || "Decision failed — check backend logs");
     } finally {
       setDeciding(false);
     }
@@ -163,6 +179,47 @@ export default function App() {
               </button>
             </div>
           </section>
+
+          <section className="panel">
+            <h2>Select Files to Fix</h2>
+            <p style={{ color: "#9aa0ac", fontSize: 13 }}>
+              Choose which flagged files the AI should repair. Unselected files stay untouched.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+              {result.file_metrics
+                .filter((f) => f.bug_risk_label !== "low")
+                .map((f, i) => (
+                  <label key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!selectedFiles[f.file_path]}
+                      onChange={() => toggleFile(f.file_path)}
+                    />
+                    <span style={{ fontFamily: "monospace" }}>{f.file_path}</span>
+                    <span style={{ color: riskColor(f.bug_risk_label) }}>
+                      ({(f.bug_risk_score * 100).toFixed(0)}% risk)
+                    </span>
+                  </label>
+                ))}
+              {result.file_metrics.filter((f) => f.bug_risk_label !== "low").length === 0 && (
+                <p style={{ color: "#9aa0ac", fontSize: 13 }}>No flagged files to fix.</p>
+              )}
+            </div>
+          </section>
+
+          {result.fix_diffs && result.fix_diffs.length > 0 && (
+            <section className="panel">
+              <h2>Applied Fixes</h2>
+              {result.fix_diffs.map((d, i) => (
+                <div key={i} style={{ marginBottom: 12, background: "#14161d", borderRadius: 8, padding: 10 }}>
+                  <div style={{ fontFamily: "monospace", fontSize: 12, color: "#9aa0ac" }}>{d.file_path}</div>
+                  <pre style={{ fontSize: 11, color: "#6fe0a1", whiteSpace: "pre-wrap", maxHeight: 150, overflow: "auto" }}>
+                    {d.fixed}
+                  </pre>
+                </div>
+              ))}
+            </section>
+          )}
 
           <section className="panel">
             <h2>Bug Risk by File (top 12)</h2>
