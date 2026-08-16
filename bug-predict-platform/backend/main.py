@@ -87,9 +87,11 @@ def make_decision(req: DecisionRequest):
             {"file_path": f.file_path, "content": scan["file_contents"].get(f.file_path, ""), "issue": f.issue}
             for f in req.files_to_fix
         ]
-        branch = create_fix_branch_and_commit(req.owner, req.repo, req.branch, payload)
+        branch, diffs, skipped = create_fix_branch_and_commit(req.owner, req.repo, req.branch, payload)
         scan["decision"] = "fix_suggested"
         scan["fix_branch"] = branch
+        scan["fix_diffs"] = diffs
+        scan["skipped_files"] = skipped
     else:
         raise HTTPException(status_code=400, detail="invalid decision")
 

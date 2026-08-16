@@ -8,6 +8,7 @@ class FileMetrics(BaseModel):
     maintainability_index: float
     bug_risk_score: float
     bug_risk_label: str
+    
 
 class SecurityIssue(BaseModel):
     file_path: str
@@ -28,3 +29,5 @@ class ScanState(BaseModel):
     overall_quality_score: float = 0.0
     decision: str = "pending"          # pending | approved | rejected | fix_suggested
     fix_branch: Optional[str] = None
+    fix_diffs: List[dict] = []
+    skipped_files: List[dict] = []

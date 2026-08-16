@@ -2,7 +2,7 @@ import os
 import google.generativeai as genai
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-flash-latest")
 
 PROMPT = """You are a senior code reviewer. For the file below, identify:
 1. Code smells (long functions, duplication, poor naming, tight coupling)

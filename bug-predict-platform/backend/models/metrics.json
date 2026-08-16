@@ -1,0 +1,7 @@
+{
+  "accuracy": 0.83,
+  "f1_score": 0.081,
+  "auc_roc": 0.637,
+  "n_samples": 2000,
+  "data_source": "modeled dataset based on known complexity-defect correlations"
+}
