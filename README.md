@@ -26,87 +26,102 @@ An AI-powered platform that acts as a continuous quality layer around the Git wo
 ---
 
 ## Workflow
-
-```
-┌─────────────┐
-│  Developer  │
-│    Push     │
-└──────┬──────┘
-       │
-       ▼
 ┌─────────────────────┐
-│   GitHub Webhook     │  (signature-verified)
-└──────┬───────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│   Backend Server     │  FastAPI + LangGraph
-└──────┬───────────────┘
-       │
-       ▼
-┌─────────────────────────────────────┐
-│         ANALYZE (LangGraph)          │
-│                                       │
-│  Fetch Modified Files                │
-│  (GitHub Contents API — no clone)    │
-│              │                       │
-│              ▼                       │
-│  ┌─────────┬─────────┬────────────┐  │
-│  │  Radon  │ Bandit  │  Semgrep   │  │
-│  │Complexity│Security │  Patterns  │  │
-│  └────┬────┴────┬────┴─────┬──────┘  │
-│       │         │          │         │
-│       └────┬────┴──────────┘         │
-│            ▼                         │
-│    ML Risk Scoring                   │
-│  (GradientBoostingClassifier)        │
-│            │                         │
-│            ▼                         │
-│    Gemini Contextual Review          │
-│  (code smells, qualitative bugs)     │
-│            │                         │
-│            ▼                         │
-│      SCAN_STORE (results)            │
-└──────┬────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│  React Dashboard     │
-│  Score · Charts ·    │
-│  Security Issues     │
-└──────┬───────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│      Developer Decides       │
-│                               │
-│  Reject │ Approve │ Suggest  │
-│                    Fix &      │
-│                    Approve     │
-└──────┬────────────────────────┘
-       │  (Suggest Fix & Approve)
-       ▼
-┌─────────────────────────────┐
-│      fix_agent.py            │
-│                               │
-│  1. Generate patch (Gemini)  │
-│  2. Self-verify fix (SAFE/   │
-│     UNSAFE check)             │
-│  3. Create AI_FIX-<hash>     │
-│     branch                    │
-│  4. Commit only approved,     │
-│     verified fixes            │
-└──────┬────────────────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│   GitHub Branch      │
-│   AI_FIX-xxxxxxxx     │
-│   (never touches      │
-│    main directly)     │
-└──────────────────────┘
-```
-
+                         │     DEVELOPER       │
+                         │      Push Code      │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │       GITHUB        │
+                         │     Repository      │
+                         └──────────┬──────────┘
+                                    │
+                           Webhook / API
+                                    │
+                                    ▼
+                    ┌─────────────────────────────┐
+                    │       FASTAPI BACKEND       │
+                    │                             │
+                    │        LANGGRAPH            │
+                    │     Orchestration Layer     │
+                    └──────────────┬──────────────┘
+                                   │
+                     ┌─────────────┴─────────────┐
+                     │                           │
+                     ▼                           ▼
+          ┌──────────────────┐        ┌──────────────────┐
+          │ GitHub Contents  │        │   Scan Pipeline  │
+          │      API         │        │                  │
+          └────────┬─────────┘        │ ┌──────────────┐ │
+                   │                  │ │    Radon     │ │
+                   ▼                  │ ├──────────────┤ │
+             Modified Files           │ │    Bandit    │ │
+                                      │ ├──────────────┤ │
+                                      │ │   Semgrep    │ │
+                                      │ └──────┬───────┘ │
+                                      └────────┼─────────┘
+                                               │
+                                               ▼
+                                  ┌──────────────────────┐
+                                  │   ML RISK PREDICTOR  │
+                                  │ GradientBoosting     │
+                                  │    Classifier        │
+                                  └──────────┬───────────┘
+                                             │
+                                             ▼
+                                  ┌──────────────────────┐
+                                  │    GEMINI REVIEW     │
+                                  │ Contextual Analysis  │
+                                  └──────────┬───────────┘
+                                             │
+                                             ▼
+                                  ┌──────────────────────┐
+                                  │   QUALITY / RISK     │
+                                  │       RESULTS        │
+                                  └──────────┬───────────┘
+                                             │
+                                             ▼
+                              ┌──────────────────────────┐
+                              │      REACT DASHBOARD     │
+                              │                          │
+                              │ Score │ Issues │ Files  │
+                              └────────────┬─────────────┘
+                                           │
+                                  Human-in-the-loop
+                                           │
+                          ┌────────────────┼────────────────┐
+                          ▼                ▼                ▼
+                       REJECT           APPROVE       SUGGEST FIX
+                                                           │
+                                                           ▼
+                                               ┌────────────────────┐
+                                               │    AI FIX AGENT    │
+                                               │                    │
+                                               │ Generate → Verify  │
+                                               └─────────┬──────────┘
+                                                         │
+                                                SAFE / VERIFIED
+                                                         │
+                                                         ▼
+                                               ┌────────────────────┐
+                                               │   AI_FIX BRANCH    │
+                                               │   AI_FIX-xxxxxxxx  │
+                                               └─────────┬──────────┘
+                                                         │
+                                                         ▼
+                                               ┌────────────────────┐
+                                               │ BEFORE / AFTER DIFF│
+                                               │                    │
+                                               │ Human Review       │
+                                               └─────────┬──────────┘
+                                                         │
+                                                         ▼
+                                               ┌────────────────────┐
+                                               │    MAIN BRANCH     │
+                                               │   Human Approved   │
+                                               │       Merge        │
+                                               └────────────────────┘
 ---
 
 ## How It Works — Step by Step
