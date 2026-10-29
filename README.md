@@ -1,267 +1,186 @@
-You're very welcome — genuinely glad it's all working now. Here's a complete README, ready to drop in as `README.md` at your repo root.
+🔍 AI Software Bug Prediction & Code Quality Platform
 
-```markdown
-# 🔍 AI Software Bug Prediction & Code Quality Platform
+Hi! I’m Kinara 👋
 
-**PS-038 | Software Engineering × Artificial Intelligence**
+I built this project to explore how AI and machine learning can help developers find potential problems in their code before those problems become bigger issues.
 
-A continuous quality layer around the Git workflow — predicting bug risk, detecting security issues, identifying code smells, and enabling AI-assisted repair, all with the developer in control.
+While working on this idea, I wanted to bring a few things together in one place: bug-risk prediction, code quality checks, security scanning, and AI-assisted fixes. Instead of switching between different tools and manually reviewing every finding, the goal is to make the process easier to understand and manage.
 
-**Team haritadesara1** — Harit Adesara · Fenil Koshti · Kinara Patel
+This project is still evolving, and I’m using it to learn more about how these technologies can work together in a practical software development workflow.
 
-🔗 Live repo: [github.com/Kinara2020/bug-predict-platform](https://github.com/Kinara2020/bug-predict-platform)
+🤔 What does this project do?
 
----
+The idea is pretty simple: when code changes, the platform analyzes it and helps identify areas that might need attention.
 
-## The Problem
+Here’s what I’ve worked on:
 
-Bugs are often discovered after deployment — when fixes are slower, costlier, and disruptive. Traditional workflows rely on manual code review, testing, and CI/CD pipelines, but many issues still surface late in the development lifecycle, creating maintenance overhead, security risk, and delayed releases.
+* Bug prediction: Uses machine learning and code metrics to estimate how risky a file might be.
+* Code quality checks: Uses Radon to measure code complexity and maintainability.
+* Security scanning: Uses Bandit and Semgrep to find potentially unsafe code patterns.
+* AI code review: Uses Google Gemini to review selected findings and provide additional context.
+* AI-assisted fixes: Can suggest changes for selected issues and prepare them on a separate Git branch.
+* Dashboard: Displays the analysis results so they’re easier to review.
 
-## Our Solution
+The idea isn’t to let AI make every decision. I want developers to understand the findings, review the suggested changes, and decide what should happen next.
 
-An AI-powered platform that acts as a continuous quality layer around the Git workflow. Every push can trigger automatic analysis — predicting bug risk, scanning for security vulnerabilities, and surfacing code smells — before problems ever reach production.
+🔄 How does it work?
 
-**Core idea: Predict → Detect → Decide → Repair**
+Here’s the basic flow:
 
----
+1. A developer pushes code to GitHub or starts a scan manually.
+2. The backend fetches the relevant files from the repository.
+3. The analysis pipeline checks the code using Radon, Bandit, and Semgrep.
+4. A machine learning model estimates bug risk using code metrics.
+5. Gemini provides an additional review of selected findings.
+6. The results appear on the React dashboard.
+7. If a fix is requested, the system can prepare a proposed change on a separate branch for review.
 
-## Workflow
-┌─────────────────────┐
-                         │     DEVELOPER       │
-                         │      Push Code      │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │       GITHUB        │
-                         │     Repository      │
-                         └──────────┬──────────┘
-                                    │
-                           Webhook / API
-                                    │
-                                    ▼
-                    ┌─────────────────────────────┐
-                    │       FASTAPI BACKEND       │
-                    │                             │
-                    │        LANGGRAPH            │
-                    │     Orchestration Layer     │
-                    └──────────────┬──────────────┘
-                                   │
-                     ┌─────────────┴─────────────┐
-                     │                           │
-                     ▼                           ▼
-          ┌──────────────────┐        ┌──────────────────┐
-          │ GitHub Contents  │        │   Scan Pipeline  │
-          │      API         │        │                  │
-          └────────┬─────────┘        │ ┌──────────────┐ │
-                   │                  │ │    Radon     │ │
-                   ▼                  │ ├──────────────┤ │
-             Modified Files           │ │    Bandit    │ │
-                                      │ ├──────────────┤ │
-                                      │ │   Semgrep    │ │
-                                      │ └──────┬───────┘ │
-                                      └────────┼─────────┘
-                                               │
-                                               ▼
-                                  ┌──────────────────────┐
-                                  │   ML RISK PREDICTOR  │
-                                  │ GradientBoosting     │
-                                  │    Classifier        │
-                                  └──────────┬───────────┘
-                                             │
-                                             ▼
-                                  ┌──────────────────────┐
-                                  │    GEMINI REVIEW     │
-                                  │ Contextual Analysis  │
-                                  └──────────┬───────────┘
-                                             │
-                                             ▼
-                                  ┌──────────────────────┐
-                                  │   QUALITY / RISK     │
-                                  │       RESULTS        │
-                                  └──────────┬───────────┘
-                                             │
-                                             ▼
-                              ┌──────────────────────────┐
-                              │      REACT DASHBOARD     │
-                              │                          │
-                              │ Score │ Issues │ Files  │
-                              └────────────┬─────────────┘
-                                           │
-                                  Human-in-the-loop
-                                           │
-                          ┌────────────────┼────────────────┐
-                          ▼                ▼                ▼
-                       REJECT           APPROVE       SUGGEST FIX
-                                                           │
-                                                           ▼
-                                               ┌────────────────────┐
-                                               │    AI FIX AGENT    │
-                                               │                    │
-                                               │ Generate → Verify  │
-                                               └─────────┬──────────┘
-                                                         │
-                                                SAFE / VERIFIED
-                                                         │
-                                                         ▼
-                                               ┌────────────────────┐
-                                               │   AI_FIX BRANCH    │
-                                               │   AI_FIX-xxxxxxxx  │
-                                               └─────────┬──────────┘
-                                                         │
-                                                         ▼
-                                               ┌────────────────────┐
-                                               │ BEFORE / AFTER DIFF│
-                                               │                    │
-                                               │ Human Review       │
-                                               └─────────┬──────────┘
-                                                         │
-                                                         ▼
-                                               ┌────────────────────┐
-                                               │    MAIN BRANCH     │
-                                               │   Human Approved   │
-                                               │       Merge        │
-                                               └────────────────────┘
----
+GitHub
+   ↓
+FastAPI Backend
+   ↓
+Code Analysis
+   ↓
+ML Bug-Risk Prediction
+   ↓
+Gemini Review
+   ↓
+React Dashboard
+   ↓
+Review Findings
+   ↓
+Proposed Fix → Separate Branch
 
-## How It Works — Step by Step
+🧰 Tech stack
 
-**1. Ingest**
-A developer pushes code to GitHub. A webhook (HMAC signature-verified) notifies the backend instantly. For manual testing, the dashboard also supports triggering a scan directly by entering an owner/repo/branch.
+These are the main technologies used in the project:
 
-**2. Fetch**
-Only the modified files are pulled via the GitHub Contents API — no full repository clone, keeping the workflow lightweight and fast.
+* Frontend: React, Recharts
+* Backend: FastAPI, PyGithub
+* Workflow: LangGraph
+* Machine learning: Python, scikit-learn, Gradient Boosting
+* Code analysis: Radon
+* Security scanning: Bandit, Semgrep
+* AI integration: Google Gemini
+* Version control: Git and GitHub APIs
 
-**3. Analyze — Multi-Signal Detection**
-- **Radon** computes code complexity and maintainability metrics per file
-- **Bandit** (Python) and **Semgrep** (multi-language) scan for security vulnerabilities and known bad patterns
-- A **trained ML classifier** (GradientBoostingClassifier) converts complexity metrics into a bug-risk probability score per file
-- **Gemini** performs contextual review on the highest-risk files — catching code smells and issues that pattern-matching alone would miss
+🧠 A little about the machine learning part
 
-**4. Score**
-All signals combine into a single 0–100 Overall Quality Score, plus a per-file risk label (low/medium/high).
+One part of this project that interested me was using code metrics to estimate bug risk.
 
-**5. Decide — Human in the Loop**
-The developer reviews findings on the dashboard and chooses:
-- **Reject** — dismiss the finding
-- **Approve** — accept as-is
-- **Suggest Fix & Approve** — select specific flagged files for AI repair (unselected files are never touched)
+The model uses features such as lines of code, cyclomatic complexity, maintainability index, and comment ratio to make predictions.
 
-**6. Repair**
-For approved fixes, `fix_agent.py`:
-1. Generates a precise patch via Gemini, scoped only to the described issue
-2. Runs a self-verification pass — the agent checks its own fix for safety before committing anything
-3. Creates an isolated `AI_FIX-<hash>` branch (never touches `main` directly)
-4. Commits only fixes that pass verification; unsafe fixes are skipped and reported back
+The current version was trained using a modeled dataset based on assumed relationships between code complexity and defects. The reported evaluation results are approximately:
 
-**7. Review**
-The dashboard displays the new branch name and the actual before/after code diff, so the team has a clear, traceable place to review AI-generated changes before merging.
+Metric	Result
+Accuracy	0.83
+F1 score	0.81
+ROC-AUC	0.64
 
----
+These results are from the current modeled dataset, so they shouldn’t be taken as proof of how well the model will perform on real-world code. Testing it on a properly labeled software-defect dataset is one of the improvements I’d like to make.
 
-## Tech Stack
+🛡️ Why keep a developer involved?
 
-| Layer | Technology |
-|---|---|
-| Orchestration | LangGraph (StateGraph) |
-| Backend | FastAPI, PyGithub |
-| Bug Prediction | Radon (metrics) + GradientBoostingClassifier (scikit-learn) |
-| Security Analysis | Bandit + Semgrep |
-| AI Review & Repair | Google Gemini |
-| Frontend | React, Recharts |
-| Integration | GitHub Webhooks, GitHub Contents API |
+I didn’t want the system to automatically change code and push it directly into the main branch.
 
----
+Instead, the intended workflow allows developers to review the findings, choose which files need attention, and inspect proposed changes before merging them.
 
-## Model Notes
+AI-generated fixes can be incorrect, so keeping the changes separate makes them easier to check and test.
 
-The bug-risk classifier is trained on a modeled dataset reflecting documented complexity–defect correlations from software engineering research (loc, cyclomatic complexity, maintainability index, comment ratio → defect probability). Current evaluation: Accuracy ~0.83, F1 ~0.81, AUC-ROC ~0.64. The full training pipeline (`backend/models/train_model.py`) is designed to be re-pointed at a larger real-world labeled defect dataset (e.g. NASA PROMISE) for future accuracy improvements — this is on our roadmap, not a limitation of the architecture.
+⚙️ Running the project locally
 
----
+What you’ll need
 
-## Why This, Not Just SonarQube or CodeQL
+* Python 3.10+
+* Node.js 18+
+* Git
+* A GitHub token with the required permissions
+* A Google Gemini API key
 
-Existing tools are strong at individual stages of detection. This platform unifies them into one workflow:
+1. Clone the repository
 
-- Combines complexity, security, pattern, and contextual AI signals into a single risk-oriented finding
-- Lets developers Reject / Approve / Suggest Fix — decision stays human-controlled
-- Generates an isolated, traceable branch for any approved AI remediation
-- Lightweight — API-based file retrieval, no full repository clone
+git clone https://github.com/Kinara2020/bug-predict-platform.git
+cd bug-predict-platform
 
-Not another static analyzer — a continuous decision-and-remediation layer around the Git workflow.
+2. Start the backend
 
----
-
-## Setup
-
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- A GitHub Personal Access Token (classic, `repo` scope)
-- A Google Gemini API key
-
-### Backend
-```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # macOS/Linux
+
+On Windows:
+
+venv\Scripts\activate
+
+On macOS or Linux:
+
+source venv/bin/activate
+
+Install the dependencies:
 
 pip install -r requirements.txt
 
-# Create .env from .env.example and fill in real values:
-# GITHUB_TOKEN=your_token
-# GOOGLE_API_KEY=your_key
-# GITHUB_WEBHOOK_SECRET=your_secret
+Configure the required environment variables using the project’s .env.example, if available. Add your GitHub token, Gemini API key, and webhook secret as needed. Keep your actual credentials private.
 
-python models/train_model.py    # trains and saves the ML model
+If you need to train the model:
+
+python models/train_model.py
+
+Start the backend:
+
 uvicorn main:app --reload --port 8000
-```
 
-### Frontend
-```bash
+3. Start the frontend
+
+Open another terminal from the project root:
+
 cd frontend
 npm install
 npm run dev
-```
-Open `http://localhost:5173`
 
-### Webhook (optional, for live push-triggered scans)
-```bash
-ngrok http 8000
-```
-Add the forwarding URL + `/webhook` as a GitHub webhook (Settings → Webhooks), content type `application/json`, matching secret.
+Open the local URL shown in your terminal, usually http://localhost:5173.
 
----
+Note: These instructions assume the folders and scripts are present at these locations in the current version of the repository.
 
-## Roadmap
+📂 Project structure
 
-- **Multi-language analysis** — expand Semgrep rule packs and language-specific analyzers
-- **PR feedback loops** — automated inline pull-request comments
-- **Historical intelligence** — use bug trends to refine ML risk scoring on a larger real-world dataset
-- **Team authentication** — GitHub OAuth login, per-user decision history and audit trail
+bug-predict-platform/
+├── backend/
+│   ├── main.py
+│   ├── graph.py
+│   ├── state.py
+│   ├── fix_agent.py
+│   ├── github_utils.py
+│   ├── analysis/
+│   │   ├── static_analysis.py
+│   │   ├── semgrep_scan.py
+│   │   ├── ml_bug_predictor.py
+│   │   └── llm_review.py
+│   └── models/
+│       ├── train_model.py
+│       └── bug_risk_model.pkl
+└── frontend/
+    └── src/
+        └── App.jsx
 
----
+🚧 What’s next?
 
-## Project Structure
-```
-backend/
-├── main.py                  # FastAPI app, webhook + decision endpoints
-├── graph.py                 # LangGraph pipeline definition
-├── state.py                 # Shared state schema
-├── fix_agent.py             # AI repair agent (generate → verify → commit)
-├── github_utils.py          # GitHub Contents API integration
-├── analysis/
-│   ├── static_analysis.py   # Bandit
-│   ├── semgrep_scan.py      # Semgrep
-│   ├── ml_bug_predictor.py  # Radon + ML risk scoring
-│   └── llm_review.py        # Gemini contextual review
-└── models/
-    ├── train_model.py       # Model training script
-    └── bug_risk_model.pkl   # Trained classifier
+There are a few things I’d like to improve as I continue working on this project:
 
-frontend/
-└── src/
-    └── App.jsx               # Dashboard UI
+* Test the bug-risk model on real-world datasets.
+* Improve the reliability of risk predictions.
+* Reduce false positives in code analysis.
+* Improve the testing and verification of AI-generated fixes.
+* Add more useful information to the dashboard.
+* Explore automated feedback on pull requests.
 
+💭 Final thoughts
 
+This project has been a way for me to explore the practical side of combining machine learning, static analysis, and generative AI.
+
+There’s still room to improve it, especially when it comes to evaluating the model on real-world data and making sure suggested fixes are reliable. But that’s also what makes the project interesting to work on.
+
+Thanks for stopping by! 😊
+
+Made by Kinara Patel
+
+GitHub Repository
