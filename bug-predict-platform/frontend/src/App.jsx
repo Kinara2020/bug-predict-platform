@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import "./App.css";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "https://bug-predict-platform.onrender.com/";
 
 function riskColor(label) {
   if (label === "high") return "#f85149";
